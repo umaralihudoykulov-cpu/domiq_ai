@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="app-layout">
+  {% include 'components/sidebar.html' %}
+  <main class="main-content">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div><h1>📸 Mening Renderlarim</h1><p class="text-2">AI tomonidan yaratilgan barcha dizaynlar</p></div>
+      <a href="{% url 'ai_design:studio' %}" class="btn btn-accent">+ Yangi Render</a>
+    </div>
+    {% if designs %}
+    <div class="designs-gallery">
+      {% for design in designs %}
+      <div class="design-card" onclick="document.getElementById('modal-{{design.pk}}').classList.remove('hidden')">
+        <div class="design-card-image">
+          {% if design.image_url %}<img src="{{ design.image_url }}" alt="{{ design.style }}">
+          {% else %}<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2rem;background:var(--bg-2);">🎨</div>{% endif %}
+        </div>
+        <div class="design-card-body">
+          <div style="font-size:0.85rem;font-weight:600;">{{ design.style|title }} • {{ design.room_type|title }}</div>
+          <div style="font-size:0.75rem;color:var(--text-2);">{{ design.area }} m² • {{ design.created_at|date:"d M Y" }}</div>
+        </div>
+      </div>
+      <div id="modal-{{design.pk}}" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;" onclick="this.classList.add('hidden')">
+        {% if design.image_url %}<img src="{{ design.image_url }}" style="max-width:90vw;max-height:90vh;border-radius:16px;">{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center" style="padding:80px;color:var(--text-3);">
+      <div style="font-size:4rem;margin-bottom:16px;">🎨</div>
+      <h2>Hali render yo'q</h2>
+      <a href="{% url 'ai_design:studio' %}" class="btn btn-accent mt-16">AI Render Yaratish</a>
+    </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="app-layout">
+  {% include 'components/sidebar.html' %}
+  
+  <main class="main-content">
+    <!-- Page Header -->
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+      <div>
+        <h1>Salom, {{ user.get_first_name|default:user.username }} 👋</h1>
+        <p class="text-2">Remont loyihalaringizni boshqaring</p>
+      </div>
+      <a href="{% url 'projects:create' %}" class="btn btn-primary">
+        ➕ Yangi Loyiha
+      </a>
+    </div>
+    
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🏗️</div>
+        <div>
+          <div class="stat-value gradient-text">{{ total_projects }}</div>
+          <div class="stat-label">Jami Loyihalar</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">🔄</div>
+        <div>
+          <div class="stat-value" style="color:var(--accent);">{{ active_projects }}</div>
+          <div class="stat-label">Faol Loyihalar</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div>
+          <div class="stat-value" style="color:var(--accent-green);">{{ completed_projects }}</div>
+          <div class="stat-label">Yakunlangan</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">🤖</div>
+        <div>
+          <div class="stat-value gradient-text">{{ ai_used }}/{{ ai_limit }}</div>
+          <div class="stat-label">AI So'rovlar (Bugun)</div>
+        </div>
+        <div style="margin-top:4px;">
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" style="width:{% if ai_limit > 0 %}{% widthratio ai_used ai_limit 100 %}{% else %}0{% endif %}%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:32px;">
+      <a href="{% url 'ai_design:studio' %}" class="glass-card p-16 text-center" style="text-decoration:none;color:inherit;">
+        <div style="font-size:1.8rem;margin-bottom:8px;">🎨</div>
+        <div style="font-size:0.8rem;font-weight:600;">AI Dizayn</div>
+      </a>
+      <a href="{% url 'electrical:planner' %}" class="glass-card p-16 text-center" style="text-decoration:none;color:inherit;">
+        <div style="font-size:1.8rem;margin-bottom:8px;">⚡</div>
+        <div style="font-size:0.8rem;font-weight:600;">Elektr AI</div>
+      </a>
+      <a href="{% url 'estimates:calculator' %}" class="glass-card p-16 text-center" style="text-decoration:none;color:inherit;">
+        <div style="font-size:1.8rem;margin-bottom:8px;">📊</div>
+        <div style="font-size:0.8rem;font-weight:600;">Smeta</div>
+      </a>
+      <a href="{% url 'materials:calculator' %}" class="glass-card p-16 text-center" style="text-decoration:none;color:inherit;">
+        <div style="font-size:1.8rem;margin-bottom:8px;">🧱</div>
+        <div style="font-size:0.8rem;font-weight:600;">Materiallar</div>
+      </a>
+      <a href="{% url 'smart_home:dashboard' %}" class="glass-card p-16 text-center" style="text-decoration:none;color:inherit;">
+        <div style="font-size:1.8rem;margin-bottom:8px;">🏡</div>
+        <div style="font-size:0.8rem;font-weight:600;">Smart Home</div>
+      </a>
+      <a href="{% url 'marketplace:index' %}" class="glass-card p-16 text-center" style="text-decoration:none;color:inherit;">
+        <div style="font-size:1.8rem;margin-bottom:8px;">👷</div>
+        <div style="font-size:0.8rem;font-weight:600;">Ustalar</div>
+      </a>
+    </div>
+    
+    <!-- Recent Projects + Designs -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;" class="dash-grid">
+      
+      <!-- Recent Projects -->
+      <div class="glass-card p-24">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <h2 style="font-size:1.1rem;">🏗️ So'nggi Loyihalar</h2>
+          <a href="{% url 'projects:list' %}" class="btn btn-glass btn-sm">Hammasi →</a>
+        </div>
+        
+        {% if projects %}
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            {% for project in projects %}
+            <a href="{% url 'projects:detail' project.pk %}" style="text-decoration:none;">
+              <div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--radius);border:1px solid var(--card-border);transition:var(--transition);"
+                   onmouseover="this.style.background='var(--card)'" onmouseout="this.style.background='transparent'">
+                <div style="font-size:1.5rem;">
+                  {% if project.home_type == 'apartment' %}🏢
+                  {% elif project.home_type == 'house' %}🏠
+                  {% elif project.home_type == 'villa' %}🏡
+                  {% else %}🏗️{% endif %}
+                </div>
+                <div style="flex:1;overflow:hidden;">
+                  <div style="font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);">{{ project.title }}</div>
+                  <div style="font-size:0.75rem;color:var(--text-2);">{{ project.area }} m² • {{ project.rooms }} xona</div>
+                </div>
+                <span class="project-card-badge badge-{{ project.status }}" style="position:static;font-size:0.65rem;">
+                  {{ project.get_status_display }}
+                </span>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center" style="padding:32px;color:var(--text-3);">
+            <div style="font-size:2.5rem;margin-bottom:12px;">🏗️</div>
+            <p style="font-size:0.9rem;">Hali loyiha yo'q</p>
+            <a href="{% url 'projects:create' %}" class="btn btn-primary btn-sm mt-16">Birinchi loyiha yaratish</a>
+          </div>
+        {% endif %}
+      </div>
+      
+      <!-- Recent AI Designs -->
+      <div class="glass-card p-24">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <h2 style="font-size:1.1rem;">🎨 So'nggi Dizaynlar</h2>
+          <a href="{% url 'ai_design:gallery' %}" class="btn btn-glass btn-sm">Hammasi →</a>
+        </div>
+        
+        {% if recent_designs %}
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+            {% for design in recent_designs|slice:":6" %}
+            <div style="aspect-ratio:1;border-radius:var(--radius);overflow:hidden;border:1px solid var(--card-border);">
+              {% if design.image_url %}
+                <img src="{{ design.image_url }}" alt="Design" style="width:100%;height:100%;object-fit:cover;">
+              {% else %}
+                <div style="width:100%;height:100%;background:var(--bg-2);display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎨</div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          <a href="{% url 'ai_design:studio' %}" class="btn btn-glass w-full mt-16" style="justify-content:center;">+ Yangi Render</a>
+        {% else %}
+          <div class="text-center" style="padding:32px;color:var(--text-3);">
+            <div style="font-size:2.5rem;margin-bottom:12px;">🎨</div>
+            <p style="font-size:0.9rem;">AI Render yo'q</p>
+            <a href="{% url 'ai_design:studio' %}" class="btn btn-accent btn-sm mt-16">AI Render Yaratish</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- 3D Room Viewer -->
+    <div class="glass-card p-24 mt-24">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <h2 style="font-size:1.1rem;margin-bottom:4px;">🏠 3D Xona Ko'rinishi</h2>
+          <p class="text-2" style="font-size:0.8rem;">Sichqoncha bilan aylantiring, zoom qiling</p>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-glass btn-sm" onclick="resetRoom3D()">↺ Reset</button>
+          <select class="form-select" style="width:auto;padding:8px 12px;font-size:0.8rem;" onchange="changeRoomStyle(this.value)">
+            <option value="modern">Modern</option>
+            <option value="luxury">Luxury</option>
+            <option value="minimal">Minimal</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="viewer-3d" id="room-viewer">
+        <canvas id="room-canvas" style="width:100%;height:100%;display:block;"></canvas>
+        <div class="viewer-controls">
+          <button class="viewer-btn" onclick="zoomRoom(1.2)" title="Zoom in">+</button>
+          <button class="viewer-btn" onclick="zoomRoom(0.8)" title="Zoom out">−</button>
+          <button class="viewer-btn" onclick="toggleRoomLight()" title="Chiroq">💡</button>
+          <button class="viewer-btn" onclick="toggleWireframe()" title="Sxema">⬡</button>
+        </div>
+        <div class="viewer-info">🏠 3D Xona • Drag: Aylantirish</div>
+      </div>
+    </div>
+    
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── 3D Room Viewer ──
+(function() {
+  const canvas = document.getElementById('room-canvas');
+  if (!canvas || !window.THREE) return;
+  
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.setClearColor(0x0A0F1E, 1);
+  
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0A0F1E, 15, 30);
+  
+  const camera = new THREE.PerspectiveCamera(50, 2, 0.1, 50);
+  camera.position.set(5, 4, 6);
+  camera.lookAt(0, 0, 0);
+  
+  // Lighting
+  const ambient = new THREE.AmbientLight(0xffffff, 0.3);
+  scene.add(ambient);
+  
+  const ceilingLight = new THREE.PointLight(0xfff5e0, 3, 12);
+  ceilingLight.position.set(0, 3.5, 0);
+  ceilingLight.castShadow = true;
+  scene.add(ceilingLight);
+  
+  const accentLight = new THREE.PointLight(0x38BDF8, 2, 8);
+  accentLight.position.set(-2.5, 0.5, -2.5);
+  scene.add(accentLight);
+  
+  const warmLight = new THREE.PointLight(0xFF8C42, 1.5, 6);
+  warmLight.position.set(2, 1, 2);
+  scene.add(warmLight);
+  
+  // Materials
+  const floorMat = new THREE.MeshLambertMaterial({ color: 0x8B6914 });
+  const wallMat = new THREE.MeshLambertMaterial({ color: 0xE8DDD0 });
+  const ceilMat = new THREE.MeshLambertMaterial({ color: 0xF5F5F5 });
+  const woodMat = new THREE.MeshLambertMaterial({ color: 0x5D3A1A });
+  const cushionMat = new THREE.MeshLambertMaterial({ color: 0x2C3E6B });
+  const glassMat = new THREE.MeshLambertMaterial({ 
+    color: 0x38BDF8, transparent: true, opacity: 0.3 
+  });
+  const ledMat = new THREE.MeshBasicMaterial({ color: 0x38BDF8, emissive: 0x38BDF8 });
+  
+  const room = new THREE.Group();
+  
+  // Floor
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(8, 0.1, 7), floorMat);
+  floor.receiveShadow = true;
+  room.add(floor);
+  
+  // Walls
+  const backWall = new THREE.Mesh(new THREE.BoxGeometry(8, 5, 0.15), wallMat);
+  backWall.position.set(0, 2.5, -3.5);
+  backWall.receiveShadow = true;
+  room.add(backWall);
+  
+  const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.15, 5, 7), wallMat);
+  leftWall.position.set(-4, 2.5, 0);
+  leftWall.receiveShadow = true;
+  room.add(leftWall);
+  
+  const rightWall = new THREE.Mesh(new THREE.BoxGeometry(0.15, 5, 7), wallMat);
+  rightWall.position.set(4, 2.5, 0);
+  rightWall.receiveShadow = true;
+  room.add(rightWall);
+  
+  // Ceiling
+  const ceiling = new THREE.Mesh(new THREE.BoxGeometry(8, 0.1, 7), ceilMat);
+  ceiling.position.set(0, 5, 0);
+  room.add(ceiling);
+  
+  // LED strip on ceiling (cyan glow)
+  const ledStrip = new THREE.Mesh(
+    new THREE.BoxGeometry(7.5, 0.05, 0.05),
+    new THREE.MeshBasicMaterial({ color: 0x38BDF8 })
+  );
+  ledStrip.position.set(0, 4.95, -3.2);
+  room.add(ledStrip);
+  
+  // Sofa
+  const sofaGroup = new THREE.Group();
+  const sofaBase = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.5, 0.9), woodMat);
+  sofaBase.position.set(0, 0.25, 0);
+  sofaGroup.add(sofaBase);
+  
+  const sofaSeat = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.3, 0.85), cushionMat);
+  sofaSeat.position.set(0, 0.65, 0);
+  sofaGroup.add(sofaSeat);
+  
+  const sofaBack = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.7, 0.15), cushionMat);
+  sofaBack.position.set(0, 0.8, -0.38);
+  sofaGroup.add(sofaBack);
+  
+  sofaGroup.position.set(-0.5, 0.05, -2.5);
+  room.add(sofaGroup);
+  
+  // Coffee table
+  const tableTop = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 0.7), woodMat);
+  tableTop.position.set(0, 0.4, 0);
+  room.add(tableTop);
+  const [tl1, tl2, tl3, tl4] = [[-0.5,-0.5],[0.5,-0.5],[-0.5,0.25],[0.5,0.25]].map(([x,z]) => {
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.4, 0.04), woodMat);
+    leg.position.set(x, 0.2, z);
+    room.add(leg);
+    return leg;
+  });
+  
+  // TV Stand
+  const tvStand = new THREE.Mesh(new THREE.BoxGeometry(2, 0.6, 0.4), woodMat);
+  tvStand.position.set(0, 0.3, -3.2);
+  room.add(tvStand);
+  
+  const tv = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1, 0.06), new THREE.MeshLambertMaterial({ color: 0x111827 }));
+  tv.position.set(0, 1.2, -3.3);
+  room.add(tv);
+  
+  const tvScreen = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.9, 0.01), new THREE.MeshBasicMaterial({ color: 0x1a1a2e }));
+  tvScreen.position.set(0, 1.2, -3.26);
+  room.add(tvScreen);
+  
+  // Window
+  const windowFrame = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.8, 0.1), woodMat);
+  windowFrame.position.set(-3.93, 2.5, 0);
+  windowFrame.rotation.y = Math.PI / 2;
+  room.add(windowFrame);
+  
+  const windowGlass = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.6, 0.02), glassMat);
+  windowGlass.position.set(-3.93, 2.5, 0);
+  windowGlass.rotation.y = Math.PI / 2;
+  room.add(windowGlass);
+  
+  // Pot plant
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 0.25, 12), new THREE.MeshLambertMaterial({ color: 0xCC7722 }));
+  pot.position.set(-3.5, 0.125, 2.5);
+  room.add(pot);
+  const plant = new THREE.Mesh(new THREE.SphereGeometry(0.3, 10, 10), new THREE.MeshLambertMaterial({ color: 0x228B22 }));
+  plant.position.set(-3.5, 0.55, 2.5);
+  room.add(plant);
+  
+  scene.add(room);
+  
+  // Mouse orbit controls
+  let isDragging = false, prevMouse = { x: 0, y: 0 };
+  let theta = 0.3, phi = 0.4, radius = 10;
+  let wireframe = false, lightsOn = true;
+  
+  function updateCamera() {
+    camera.position.x = radius * Math.sin(phi) * Math.sin(theta);
+    camera.position.y = radius * Math.cos(phi) + 1;
+    camera.position.z = radius * Math.sin(phi) * Math.cos(theta);
+    camera.lookAt(0, 1, 0);
+  }
+  updateCamera();
+  
+  const viewerEl = document.getElementById('room-viewer');
+  
+  viewerEl.addEventListener('mousedown', e => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
+  window.addEventListener('mouseup', () => isDragging = false);
+  window.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    const dx = e.clientX - prevMouse.x;
+    const dy = e.clientY - prevMouse.y;
+    theta -= dx * 0.01;
+    phi = Math.max(0.2, Math.min(Math.PI * 0.45, phi + dy * 0.01));
+    prevMouse = { x: e.clientX, y: e.clientY };
+    updateCamera();
+  });
+  
+  viewerEl.addEventListener('wheel', e => {
+    radius = Math.max(4, Math.min(18, radius + e.deltaY * 0.02));
+    updateCamera();
+  });
+  
+  // Touch support
+  let lastTouch = null;
+  viewerEl.addEventListener('touchstart', e => { lastTouch = e.touches[0]; });
+  viewerEl.addEventListener('touchmove', e => {
+    if (!lastTouch) return;
+    const dx = e.touches[0].clientX - lastTouch.clientX;
+    const dy = e.touches[0].clientY - lastTouch.clientY;
+    theta -= dx * 0.01;
+    phi = Math.max(0.2, Math.min(Math.PI * 0.45, phi + dy * 0.01));
+    lastTouch = e.touches[0];
+    updateCamera();
+  });
+  
+  window.zoomRoom = (factor) => { radius = Math.max(4, Math.min(18, radius * factor)); updateCamera(); };
+  window.resetRoom3D = () => { theta = 0.3; phi = 0.4; radius = 10; updateCamera(); };
+  window.toggleRoomLight = () => {
+    lightsOn = !lightsOn;
+    ceilingLight.intensity = lightsOn ? 3 : 0;
+    ambient.intensity = lightsOn ? 0.3 : 0.05;
+    ledStrip.visible = lightsOn;
+  };
+  window.toggleWireframe = () => {
+    wireframe = !wireframe;
+    room.traverse(obj => { if (obj.material) obj.material.wireframe = wireframe; });
+  };
+  window.changeRoomStyle = (style) => {
+    const styles = {
+      modern: { floor: 0x555555, wall: 0x2D3748, cushion: 0x38BDF8 },
+      luxury: { floor: 0x8B6914, wall: 0xE8DDD0, cushion: 0x2C3E6B },
+      minimal: { floor: 0xEEEEEE, wall: 0xFFFFFF, cushion: 0x4A5568 },
+    };
+    const s = styles[style] || styles.luxury;
+    floorMat.color.setHex(s.floor);
+    wallMat.color.setHex(s.wall);
+    cushionMat.color.setHex(s.cushion);
+  };
+  
+  function resize() {
+    const w = viewerEl.clientWidth, h = viewerEl.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  new ResizeObserver(resize).observe(viewerEl);
+  
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.005;
+    // Subtle light animation
+    ceilingLight.intensity = lightsOn ? 2.5 + Math.sin(t * 2) * 0.3 : 0;
+    accentLight.intensity = 1.5 + Math.sin(t * 1.5 + 1) * 0.5;
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+
+<style>
+@media (max-width: 768px) {
+  .dash-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+{% endblock %}

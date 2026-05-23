@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<nav class="navbar glass-nav">
+  <div class="container" style="display:flex;align-items:center;width:100%;gap:24px;">
+    <a href="/" class="navbar-brand"><div class="navbar-logo">🏠</div><span class="gradient-text">DomIQ Pro Max</span></a>
+    <div class="navbar-links"><a href="/">Bosh sahifa</a><a href="/pricing/">Narxlar</a><a href="/contact/" class="active">Aloqa</a></div>
+    <div class="navbar-actions" style="margin-left:auto;">
+      {% if user.is_authenticated %}<a href="/dashboard/" class="btn btn-primary btn-sm">Dashboard</a>{% else %}<a href="/auth/register/" class="btn btn-primary btn-sm">Boshlash</a>{% endif %}
+    </div>
+  </div>
+</nav>
+
+<div style="padding-top:100px;padding-bottom:80px;">
+  <div class="container">
+    <div style="max-width:600px;margin:0 auto;text-align:center;margin-bottom:48px;">
+      <h1 style="font-size:2.5rem;margin-bottom:16px;">Biz bilan <span class="gradient-text">Bog'laning</span></h1>
+    </div>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;margin:0 auto;">
+      <div class="glass-card p-24">
+        <h3 style="margin-bottom:24px;">📩 Xabar Yuborish</h3>
+        <form id="contact-form">
+          <div class="form-group"><label class="form-label">Ism</label><input type="text" class="form-input" placeholder="Ismingiz" required></div>
+          <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" placeholder="email@example.com" required></div>
+          <div class="form-group"><label class="form-label">Xabar</label><textarea class="form-input" rows="4" placeholder="Savolingizni yozing..." required></textarea></div>
+          <button type="submit" class="btn btn-primary w-full" onclick="sendContact(event)">📤 Yuborish</button>
+        </form>
+      </div>
+      
+      <div class="glass-card p-24">
+        <h3 style="margin-bottom:24px;">📞 Aloqa Ma'lumotlari</h3>
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;background:rgba(37,99,235,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📱</div>
+            <div><div style="font-size:0.75rem;color:var(--text-2);">Telegram</div><div style="font-weight:600;">@domiq_pro</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;background:rgba(56,189,248,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📧</div>
+            <div><div style="font-size:0.75rem;color:var(--text-2);">Email</div><div style="font-weight:600;">info@domiq.uz</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;background:rgba(16,185,129,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📍</div>
+            <div><div style="font-size:0.75rem;color:var(--text-2);">Manzil</div><div style="font-weight:600;">Toshkent, O'zbekiston</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:40px;height:40px;background:rgba(245,158,11,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🕐</div>
+            <div><div style="font-size:0.75rem;color:var(--text-2);">Ish vaqti</div><div style="font-weight:600;">09:00 — 18:00 (Dush-Shan)</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sendContact(e) {
+  e.preventDefault();
+  showToast('Xabaringiz yuborildi! Tez orada javob beramiz.', 'success');
+  e.target.closest('form').reset();
+}
+</script>
+{% endblock %}

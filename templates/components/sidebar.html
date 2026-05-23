@@ -1,0 +1,160 @@
+<!-- Dashboard Sidebar Component -->
+{% load static %}
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">🏠</div>
+    <div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-weight:800;font-size:1rem;line-height:1.2;" class="gradient-text">DomIQ</div>
+      <div style="font-size:0.6rem;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">PRO MAX</div>
+    </div>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <!-- Main -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Asosiy</div>
+      
+      <a href="{% url 'dashboard:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <span class="icon">📊</span>
+        Dashboard
+      </a>
+      
+      <a href="{% url 'projects:list' %}" class="sidebar-link {% if 'projects' in request.path %}active{% endif %}">
+        <span class="icon">🏗️</span>
+        Loyihalarim
+        {% if request.user.projects.count %}
+        <span class="sidebar-badge">{{ request.user.projects.count }}</span>
+        {% endif %}
+      </a>
+    </div>
+    
+    <!-- AI Tools -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">AI Vositalar</div>
+      
+      <a href="{% url 'ai_design:studio' %}" class="sidebar-link {% if 'ai-design' in request.path %}active{% endif %}">
+        <span class="icon">🎨</span>
+        AI Dizayn
+        <span class="sidebar-badge ai">AI</span>
+      </a>
+      
+      <a href="{% url 'electrical:planner' %}" class="sidebar-link {% if 'electrical' in request.path %}active{% endif %}">
+        <span class="icon">⚡</span>
+        Elektr Montaj AI
+        <span class="sidebar-badge ai">AI</span>
+      </a>
+      
+      <a href="{% url 'smart_home:dashboard' %}" class="sidebar-link {% if 'smart-home' in request.path %}active{% endif %}">
+        <span class="icon">🏡</span>
+        Smart Home
+        <span class="sidebar-badge new">NEW</span>
+      </a>
+    </div>
+    
+    <!-- Planning -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Rejalashtirish</div>
+      
+      <a href="{% url 'estimates:calculator' %}" class="sidebar-link {% if 'estimates' in request.path %}active{% endif %}">
+        <span class="icon">📊</span>
+        Smeta Kalkulyator
+      </a>
+      
+      <a href="{% url 'materials:calculator' %}" class="sidebar-link {% if 'materials' in request.path %}active{% endif %}">
+        <span class="icon">🧱</span>
+        Material Hisob
+      </a>
+    </div>
+    
+    <!-- Marketplace -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Bozor</div>
+      
+      <a href="{% url 'marketplace:index' %}" class="sidebar-link {% if 'marketplace' in request.path %}active{% endif %}">
+        <span class="icon">👷</span>
+        Usta Bozori
+      </a>
+    </div>
+    
+    <!-- Account -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Akkaunt</div>
+      
+      <a href="{% url 'accounts:profile' %}" class="sidebar-link {% if 'profile' in request.path %}active{% endif %}">
+        <span class="icon">👤</span>
+        Profil
+      </a>
+      
+      {% if request.user.is_staff %}
+      <a href="{% url 'admin:index' %}" class="sidebar-link" target="_blank">
+        <span class="icon">⚙️</span>
+        Admin Panel
+      </a>
+      {% endif %}
+      
+      <a href="{% url 'accounts:logout' %}" class="sidebar-link" style="color:var(--text-3);">
+        <span class="icon">🚪</span>
+        Chiqish
+      </a>
+    </div>
+  </nav>
+  
+  <!-- User Info -->
+  <div class="sidebar-user">
+    {% if request.user.avatar %}
+      <img src="{{ request.user.avatar.url }}" alt="Avatar" class="sidebar-avatar" style="display:flex;">
+    {% else %}
+      <div class="sidebar-avatar">{{ request.user.username|first|upper }}</div>
+    {% endif %}
+    
+    <div style="overflow:hidden;flex:1;">
+      <div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        {{ request.user.get_full_name|default:request.user.username }}
+      </div>
+      <div style="margin-top:2px;">
+        <span class="sidebar-plan-badge plan-{{ request.user.plan }}">{{ request.user.get_plan_display|default:request.user.plan }}</span>
+      </div>
+    </div>
+    
+    <!-- AI Usage indicator -->
+    <div title="AI So'rovlar: {{ request.user.ai_requests_today }}/{{ request.user.ai_limit }}">
+      <svg width="28" height="28" viewBox="0 0 36 36">
+        <circle cx="18" cy="18" r="15" fill="none" stroke="var(--card-border)" stroke-width="3"/>
+        <circle cx="18" cy="18" r="15" fill="none" stroke="var(--primary)" stroke-width="3"
+          stroke-dasharray="{{ request.user.ai_requests_today|default:0|floatformat:0 }} 100"
+          stroke-dashoffset="25" stroke-linecap="round"
+          transform="rotate(-90 18 18)"/>
+      </svg>
+    </div>
+  </div>
+</aside>
+
+<!-- Mobile Overlay -->
+<div id="sidebar-overlay" class="hidden" onclick="closeSidebar()"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:899;"></div>
+
+<!-- Mobile Toggle -->
+<button onclick="toggleSidebar()" id="mobile-sidebar-btn"
+  style="display:none;position:fixed;top:14px;left:14px;z-index:1001;background:var(--card);border:1px solid var(--card-border);border-radius:10px;width:40px;height:40px;cursor:pointer;color:var(--text);font-size:1.2rem;align-items:center;justify-content:center;">
+  ☰
+</button>
+
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('hidden');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.add('hidden');
+}
+
+// Show mobile btn on small screens
+if (window.innerWidth <= 768) {
+  document.getElementById('mobile-sidebar-btn').style.display = 'flex';
+}
+window.addEventListener('resize', () => {
+  const btn = document.getElementById('mobile-sidebar-btn');
+  btn.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+});
+</script>

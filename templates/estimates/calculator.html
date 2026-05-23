@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="app-layout">
+  {% include 'components/sidebar.html' %}
+  
+  <main class="main-content">
+    <div class="page-header">
+      <h1>📊 Smeta Kalkulyator</h1>
+      <p class="text-2">Remont narxini aniq hisoblang — AI sizga yordam beradi</p>
+    </div>
+    
+    <div class="calc-grid" id="est-grid">
+      <!-- Input Panel -->
+      <div class="glass-card p-24">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:20px;">📐 Remont Ma'lumotlari</h3>
+        
+        <div class="form-group">
+          <label class="form-label">📏 Maydon (m²)</label>
+          <input type="number" class="form-input" id="est-area" value="60" min="10" max="1000">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">🏠 Remont turi</label>
+          <select class="form-select" id="est-type">
+            <option value="cosmetic">Kosmetik remont (arzon)</option>
+            <option value="euro" selected>Evro remont (standart)</option>
+            <option value="design">Dizayn remont</option>
+            <option value="premium">Premium remont</option>
+            <option value="full">Kapital remont</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">🏠 Xonalar soni</label>
+          <input type="number" class="form-input" id="est-rooms" value="3" min="1" max="20">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">🏡 Qo'shimcha xizmatlar</label>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.9rem;">
+              <input type="checkbox" id="opt-smart" class="form-checkbox">
+              <span>🏡 Smart Home (+₊ narx)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.9rem;">
+              <input type="checkbox" id="opt-furniture" class="form-checkbox">
+              <span>🛋️ Mebel (+₊ narx)</span>
+            </label>
+          </div>
+        </div>
+        
+        <button class="btn btn-accent w-full btn-lg" onclick="calculateEstimate()">
+          📊 Smeta Hisoblash
+        </button>
+        
+        <!-- Quick presets -->
+        <div style="margin-top:16px;">
+          <div class="form-label" style="margin-bottom:8px;">⚡ Tez tanlash</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+            <button class="btn btn-glass btn-sm" onclick="setPreset(35,'cosmetic',1)">Studio 35m²</button>
+            <button class="btn btn-glass btn-sm" onclick="setPreset(65,'euro',2)">2 xona 65m²</button>
+            <button class="btn btn-glass btn-sm" onclick="setPreset(120,'premium',4)">Villa 120m²</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Results Panel -->
+      <div>
+        <!-- Waiting -->
+        <div class="glass-card p-24" id="est-waiting" style="height:300px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:var(--text-3);">
+          <div style="font-size:3rem;">📊</div>
+          <h3 style="font-size:1rem;color:var(--text-2);">Smeta uchun Tayyor</h3>
+          <p style="font-size:0.85rem;text-align:center;">Ma'lumotlarni kiriting va "Smeta Hisoblash" tugmasini bosing</p>
+        </div>
+        
+        <!-- Results -->
+        <div id="est-results" class="hidden">
+          <!-- Total card -->
+          <div class="glass-card p-24 mb-16" style="background:linear-gradient(135deg,rgba(37,99,235,0.12),rgba(56,189,248,0.06));border-color:rgba(56,189,248,0.3);">
+            <div class="text-center">
+              <div style="font-size:0.85rem;color:var(--text-2);margin-bottom:8px;">Jami Remont Narxi</div>
+              <div class="gradient-text" style="font-size:3rem;font-weight:900;font-family:'Space Grotesk',sans-serif;" id="est-total">—</div>
+              <div style="font-size:0.85rem;color:var(--text-2);margin-top:8px;" id="est-per-m2">—</div>
+            </div>
+          </div>
+          
+          <!-- Timeline -->
+          <div class="glass-card p-16 mb-16" style="display:flex;align-items:center;gap:16px;">
+            <div style="font-size:1.5rem;">📅</div>
+            <div>
+              <div style="font-size:0.8rem;color:var(--text-2);">Taxminiy muddat</div>
+              <div style="font-weight:700;" id="est-timeline">—</div>
+            </div>
+          </div>
+          
+          <!-- Breakdown -->
+          <div class="glass-card p-24 mb-16">
+            <h3 style="font-size:1rem;margin-bottom:16px;">📋 Xarajat Taqsimoti</h3>
+            <div id="est-breakdown"></div>
+          </div>
+          
+          <!-- Chart -->
+          <div class="glass-card p-24 mb-16">
+            <h3 style="font-size:1rem;margin-bottom:16px;">📈 Diagramma</h3>
+            <canvas id="estimate-chart" height="200"></canvas>
+          </div>
+          
+          <!-- Actions -->
+          <div style="display:flex;gap:12px;">
+            <button class="btn btn-primary" onclick="exportPDF()">📄 PDF Export</button>
+            <button class="btn btn-glass" onclick="shareEstimate()">📤 Ulashish</button>
+            <button class="btn btn-glass" onclick="document.getElementById('est-results').classList.add('hidden');document.getElementById('est-waiting').classList.remove('hidden');">🔄 Yangisi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let estimateData = null;
+
+function setPreset(area, type, rooms) {
+  document.getElementById('est-area').value = area;
+  document.getElementById('est-type').value = type;
+  document.getElementById('est-rooms').value = rooms;
+  calculateEstimate();
+}
+
+async function calculateEstimate() {
+  document.getElementById('est-waiting').classList.add('hidden');
+  document.getElementById('est-results').classList.add('hidden');
+  
+  // Show loading briefly
+  showToast('Smeta hisoblanmoqda...', 'info', 2000);
+  
+  try {
+    const resp = await fetch('/api/v1/estimates/calculate/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify({
+        area: document.getElementById('est-area').value,
+        repair_type: document.getElementById('est-type').value,
+        rooms: document.getElementById('est-rooms').value,
+        has_smart_home: document.getElementById('opt-smart').checked,
+        has_furniture: document.getElementById('opt-furniture').checked,
+      })
+    });
+    
+    const data = await resp.json();
+    
+    if (data.success) {
+      estimateData = data;
+      showEstimateResults(data);
+      showToast('Smeta tayyor! 📊', 'success');
+    } else {
+      showToast(data.error || 'Xatolik', 'error');
+      document.getElementById('est-waiting').classList.remove('hidden');
+    }
+  } catch(e) {
+    document.getElementById('est-waiting').classList.remove('hidden');
+    showToast('Ulanish xatosi', 'error');
+  }
+}
+
+function showEstimateResults(data) {
+  document.getElementById('est-results').classList.remove('hidden');
+  
+  document.getElementById('est-total').textContent = data.total_formatted;
+  document.getElementById('est-per-m2').textContent = `1 m² uchun: ${data.per_m2_formatted}`;
+  document.getElementById('est-timeline').textContent = `${data.timeline_days} ish kuni (taxminan)`;
+  
+  // Breakdown
+  const breakdownDiv = document.getElementById('est-breakdown');
+  breakdownDiv.innerHTML = data.breakdown.map(item => `
+    <div class="calc-result-item">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.2rem;">${item.icon}</span>
+        <span style="font-size:0.9rem;">${item.category}</span>
+      </div>
+      <div style="font-weight:700;color:var(--text);">${parseInt(item.cost).toLocaleString()} so'm</div>
+    </div>
+  `).join('');
+  
+  // Draw Chart
+  drawEstimateChart(data.breakdown);
+}
+
+function drawEstimateChart(breakdown) {
+  const canvas = document.getElementById('estimate-chart');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.parentElement.clientWidth - 48;
+  canvas.height = 200;
+  
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  
+  const colors = ['#2563EB', '#38BDF8', '#F59E0B', '#10B981', '#8B5CF6', '#EF4444', '#EC4899'];
+  const total = breakdown.reduce((s, b) => s + b.cost, 0);
+  const barW = Math.min(60, (W - breakdown.length * 20) / breakdown.length);
+  const padding = (W - breakdown.length * (barW + 15)) / 2;
+  
+  breakdown.forEach((item, i) => {
+    const barH = (item.cost / total) * (H - 60);
+    const x = padding + i * (barW + 15);
+    const y = H - 40 - barH;
+    
+    // Bar
+    const grad = ctx.createLinearGradient(0, y, 0, y + barH);
+    grad.addColorStop(0, colors[i % colors.length]);
+    grad.addColorStop(1, colors[i % colors.length] + '44');
+    
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(x, y, barW, barH, [6, 6, 0, 0]);
+    ctx.fill();
+    
+    // Icon
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.font = '16px serif';
+    ctx.fillText(item.icon, x + barW/2 - 8, y - 6);
+    
+    // Label
+    ctx.fillStyle = 'rgba(148,163,184,0.8)';
+    ctx.font = '9px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(item.category.slice(0, 8), x + barW/2, H - 8);
+    
+    // Value
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 9px Inter, sans-serif';
+    const pct = Math.round(item.cost / total * 100);
+    if (barH > 20) {
+      ctx.fillText(pct + '%', x + barW/2, y + 14);
+    }
+  });
+  
+  ctx.textAlign = 'left';
+}
+
+function exportPDF() {
+  if (!estimateData) return;
+  showToast('PDF tayyorlanmoqda... (Premium funksiya)', 'info');
+  
+  // Create printable version
+  const content = `
+    <div style="font-family:Arial;padding:24px;color:#333;">
+      <h1 style="color:#2563EB;">DomIQ Pro Max — Smeta</h1>
+      <p>Sana: ${new Date().toLocaleDateString('uz-UZ')}</p>
+      <hr>
+      <h2>Jami: ${estimateData.total_formatted}</h2>
+      <p>1 m²: ${estimateData.per_m2_formatted}</p>
+      <table style="width:100%;border-collapse:collapse;">
+        ${estimateData.breakdown.map(b => `
+          <tr>
+            <td style="padding:8px;border-bottom:1px solid #eee;">${b.icon} ${b.category}</td>
+            <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${parseInt(b.cost).toLocaleString()} so'm</td>
+          </tr>
+        `).join('')}
+      </table>
+    </div>
+  `;
+  
+  const win = window.open('', '_blank');
+  win.document.write(content);
+  win.document.close();
+  win.print();
+}
+
+function shareEstimate() {
+  if (!estimateData) return;
+  const text = `DomIQ Pro Max Smeta:\nJami: ${estimateData.total_formatted}\n1 m²: ${estimateData.per_m2_formatted}`;
+  navigator.share?.({ title: 'DomIQ Smeta', text }) || 
+    navigator.clipboard.writeText(text).then(() => showToast('Nusxa olindi!', 'success'));
+}
+
+// Responsive
+function updateEstLayout() {
+  const grid = document.getElementById('est-grid');
+  grid.style.gridTemplateColumns = window.innerWidth < 1024 ? '1fr' : '420px 1fr';
+}
+updateEstLayout();
+window.addEventListener('resize', updateEstLayout);
+</script>
+{% endblock %}

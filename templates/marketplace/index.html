@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="app-layout">
+  {% include 'components/sidebar.html' %}
+  
+  <main class="main-content">
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+      <div>
+        <h1>👷 Usta Bozori</h1>
+        <p class="text-2">Tasdiqlangan mutaxassislarni toping</p>
+      </div>
+    </div>
+    
+    <!-- Filter -->
+    <div class="glass-card p-16 mb-24">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <span class="form-label">🔍 Filtr:</span>
+        <a href="{% url 'marketplace:index' %}" class="btn {% if not selected_spec %}btn-primary{% else %}btn-glass{% endif %} btn-sm">Hammasi</a>
+        <a href="?spec=electrician" class="btn {% if selected_spec == 'electrician' %}btn-primary{% else %}btn-glass{% endif %} btn-sm">⚡ Elektrik</a>
+        <a href="?spec=designer" class="btn {% if selected_spec == 'designer' %}btn-primary{% else %}btn-glass{% endif %} btn-sm">🎨 Dizayner</a>
+        <a href="?spec=plumber" class="btn {% if selected_spec == 'plumber' %}btn-primary{% else %}btn-glass{% endif %} btn-sm">🔧 Santexnik</a>
+        <a href="?spec=renovator" class="btn {% if selected_spec == 'renovator' %}btn-primary{% else %}btn-glass{% endif %} btn-sm">🏗️ Remontchi</a>
+        <a href="?spec=smart_home" class="btn {% if selected_spec == 'smart_home' %}btn-primary{% else %}btn-glass{% endif %} btn-sm">🏡 Smart Home</a>
+      </div>
+    </div>
+    
+    {% if masters %}
+    <div class="masters-grid">
+      {% for master in masters %}
+      <div class="master-card">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div class="master-avatar">
+            {% if master.specialization == 'electrician' %}⚡
+            {% elif master.specialization == 'designer' %}🎨
+            {% elif master.specialization == 'plumber' %}🔧
+            {% elif master.specialization == 'smart_home' %}🏡
+            {% else %}👷{% endif %}
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;">{{ master.user.get_full_name|default:master.user.username }}</div>
+            <div class="master-rating">
+              ★ {{ master.rating|floatformat:1 }}
+              <span class="text-2" style="font-weight:400;">({{ master.total_reviews }} ta)</span>
+            </div>
+          </div>
+          {% if master.is_verified %}
+          <div class="verified-badge" style="margin-left:auto;">✓ Tasdiqlangan</div>
+          {% endif %}
+        </div>
+        
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span class="master-spec-badge">{{ master.get_specialization_display }}</span>
+          <span class="text-2" style="font-size:0.8rem;">{{ master.experience_years }} yil tajriba</span>
+        </div>
+        
+        <p class="text-2" style="font-size:0.85rem;line-height:1.6;">{{ master.bio|truncatewords:20 }}</p>
+        
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:0.75rem;color:var(--text-2);">Soatlik narx</div>
+            <div style="font-weight:700;font-size:1rem;color:var(--accent);">{{ master.hourly_rate|floatformat:0 }} so'm/soat</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            {% if master.telegram %}
+            <a href="https://t.me/{{ master.telegram }}" class="btn btn-glass btn-sm" target="_blank">📱 Telegram</a>
+            {% endif %}
+            {% if user.is_authenticated %}
+            <button class="btn btn-primary btn-sm" onclick="contactMaster('{{ master.user.get_full_name|default:master.user.username }}', '{{ master.phone }}')">📞 Bog'lanish</button>
+            {% else %}
+            <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm">Kirish</a>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div style="display:flex;align-items:center;gap:16px;font-size:0.8rem;color:var(--text-2);">
+          <span>📍 {{ master.city }}</span>
+          <span>✅ {{ master.total_orders }} ta buyurtma</span>
+          {% if master.is_available %}<span class="text-green">🟢 Mavjud</span>{% else %}<span style="color:#EF4444;">🔴 Band</span>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <!-- No masters - demo mode -->
+    <div style="display:flex;flex-direction:column;gap:16px;align-items:center;padding:64px;text-align:center;color:var(--text-3);">
+      <div style="font-size:4rem;">👷</div>
+      <h2>Ustalar hali qo'shilmagan</h2>
+      <p style="max-width:400px;">Marketplace tez orada ochiladi. Usta bo'lish uchun admin panel orqali ro'yxatdan o'ting.</p>
+      
+      <!-- Demo masters -->
+      <button class="btn btn-primary" onclick="loadDemoMasters()">Demo Ustalarni Ko'rish</button>
+    </div>
+    
+    <div id="demo-masters" class="masters-grid hidden">
+      <!-- Will be filled by JS -->
+    </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function contactMaster(name, phone) {
+  showToast(`${name} bilan bog'lanish uchun telefon: ${phone || '+998 XX XXX XX XX'}`, 'info', 5000);
+}
+
+const demoMasters = [
+  { name: 'Alisher Karimov', spec: 'Elektrik', icon: '⚡', rating: 4.9, reviews: 47, exp: 8, price: '80,000', city: 'Toshkent', bio: 'Professional elektr montaj va Smart Home integratsiyasi bo\'yicha mutaxassis. 8 yillik tajriba.' },
+  { name: 'Dilshod Yusupov', spec: 'Dizayner', icon: '🎨', rating: 4.8, reviews: 34, exp: 6, price: '120,000', city: 'Toshkent', bio: 'Interior dizayn va 3D loyihalash bo\'yicha professional. Zamonaviy va klassik uslublarda ishlaydi.' },
+  { name: 'Jasur Mirzayev', spec: 'Remontchi', icon: '🏗️', rating: 4.7, reviews: 89, exp: 12, price: '60,000', city: 'Samarqand', bio: 'Kapital va evro remont bo\'yicha katta tajribaga ega. Sifatli va o\'z vaqtida bajarish kafolati.' },
+  { name: 'Bobur Toshmatov', spec: 'Santexnik', icon: '🔧', rating: 4.6, reviews: 56, exp: 7, price: '70,000', city: 'Toshkent', bio: 'Santexnika o\'rnatish va ta\'mirlash bo\'yicha mutaxassis. Zamonaviy uskunalar bilan ishlaydi.' },
+  { name: 'Sarvar Xolmatov', spec: 'Smart Home', icon: '🏡', rating: 5.0, reviews: 23, exp: 4, price: '150,000', city: 'Toshkent', bio: 'Smart Home tizimlarini o\'rnatish va sozlash bo\'yicha mutaxassis. AI va avtomatlashtirish experti.' },
+  { name: 'Ulug\'bek Nazarov', spec: 'Mebelsoz', icon: '🪑', rating: 4.8, reviews: 41, exp: 10, price: '90,000', city: 'Namangan', bio: 'Individual dizayn asosida mebel tayyorlash va o\'rnatish. Yog\'och va metall bilan ishlaydi.' },
+];
+
+function loadDemoMasters() {
+  const container = document.getElementById('demo-masters');
+  container.classList.remove('hidden');
+  
+  container.innerHTML = demoMasters.map(m => `
+    <div class="master-card">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div class="master-avatar">${m.icon}</div>
+        <div>
+          <div style="font-weight:700;">${m.name}</div>
+          <div class="master-rating">★ ${m.rating} <span class="text-2" style="font-weight:400;">(${m.reviews} ta)</span></div>
+        </div>
+        <div class="verified-badge" style="margin-left:auto;">✓ Demo</div>
+      </div>
+      <span class="master-spec-badge">${m.spec}</span>
+      <p class="text-2" style="font-size:0.85rem;line-height:1.6;">${m.bio}</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:0.75rem;color:var(--text-2);">Soatlik narx</div>
+          <div style="font-weight:700;color:var(--accent);">${m.price} so'm</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="showToast('Demo rejim: ${m.name} bilan bog\\'lanish uchun ro\\'yxatdan o\\'ting!', 'info')">📞 Bog'lanish</button>
+      </div>
+      <div style="display:flex;gap:12px;font-size:0.8rem;color:var(--text-2);">
+        <span>📍 ${m.city}</span>
+        <span>${m.exp} yil tajriba</span>
+        <span class="text-green">🟢 Mavjud</span>
+      </div>
+    </div>
+  `).join('');
+}
+</script>
+{% endblock %}

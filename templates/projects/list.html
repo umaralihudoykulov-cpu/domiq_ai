@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="app-layout">
+  {% include 'components/sidebar.html' %}
+  
+  <main class="main-content">
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+      <div>
+        <h1>🏗️ Loyihalarim</h1>
+        <p class="text-2">Barcha remont loyihalaringiz</p>
+      </div>
+      <a href="{% url 'projects:create' %}" class="btn btn-primary">➕ Yangi Loyiha</a>
+    </div>
+    
+    {% if projects %}
+    <div class="projects-grid">
+      {% for project in projects %}
+      <a href="{% url 'projects:detail' project.pk %}" class="project-card">
+        <div class="project-card-image">
+          {% if project.floor_plan %}
+            <img src="{{ project.floor_plan.url }}" alt="{{ project.title }}">
+          {% else %}
+            <span>
+              {% if project.home_type == 'apartment' %}🏢
+              {% elif project.home_type == 'house' %}🏠
+              {% elif project.home_type == 'villa' %}🏡
+              {% elif project.home_type == 'studio' %}🛋️
+              {% else %}🏗️{% endif %}
+            </span>
+          {% endif %}
+          <span class="project-card-badge badge-{{ project.status }}">{{ project.get_status_display }}</span>
+        </div>
+        <div class="project-card-body">
+          <h3 class="project-card-title">{{ project.title }}</h3>
+          <div class="project-card-meta">
+            <span class="project-meta-item">📐 {{ project.area }} m²</span>
+            <span class="project-meta-item">🚪 {{ project.rooms }} xona</span>
+            <span class="project-meta-item">🏠 {{ project.get_home_type_display }}</span>
+            {% if project.has_smart_home %}<span class="project-meta-item" style="color:var(--accent-green);">🏡 Smart</span>{% endif %}
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-2);margin-bottom:6px;">
+              <span>Jarayon</span><span>{{ project.progress }}%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill" style="width:{{ project.progress }}%;"></div>
+            </div>
+          </div>
+          <div style="font-size:0.75rem;color:var(--text-3);">{{ project.created_at|date:"d M Y" }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center" style="padding:80px;color:var(--text-3);">
+      <div style="font-size:4rem;margin-bottom:16px;">🏗️</div>
+      <h2>Hali loyiha yo'q</h2>
+      <p style="margin:16px 0;font-size:0.9rem;">Birinchi remont loyihangizni yarating</p>
+      <a href="{% url 'projects:create' %}" class="btn btn-accent btn-lg">➕ Loyiha Yaratish</a>
+    </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

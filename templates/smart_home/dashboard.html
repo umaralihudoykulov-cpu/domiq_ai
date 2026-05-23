@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="app-layout">
+  {% include 'components/sidebar.html' %}
+  
+  <main class="main-content">
+    <div class="page-header">
+      <h1>🏡 Smart Home Boshqaruvi</h1>
+      <p class="text-2">Aqlli uy qurilmalarini boshqaring</p>
+    </div>
+    
+    <!-- Room Selector -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
+      <button class="btn btn-primary btn-sm" onclick="selectRoom('all', this)">🏠 Hammasi</button>
+      <button class="btn btn-glass btn-sm" onclick="selectRoom('living', this)">🛋️ Yashash xona</button>
+      <button class="btn btn-glass btn-sm" onclick="selectRoom('bedroom', this)">🛏️ Yotoq xona</button>
+      <button class="btn btn-glass btn-sm" onclick="selectRoom('kitchen', this)">🍳 Oshxona</button>
+      <button class="btn btn-glass btn-sm" onclick="selectRoom('bathroom', this)">🚿 Hammom</button>
+    </div>
+    
+    <!-- Smart Devices Grid -->
+    <div class="smart-grid" id="devices-grid">
+      <!-- Lights -->
+      <div class="smart-device active" id="dev-main-light" data-room="living">
+        <div class="smart-icon">💡</div>
+        <div style="font-weight:600;font-size:0.9rem;">Asosiy Chiroq</div>
+        <div style="font-size:0.75rem;color:var(--accent-green);">Yoniq</div>
+        <button class="smart-toggle on" onclick="toggleDevice(this, 'dev-main-light')"></button>
+        <input type="range" min="1" max="100" value="80" style="width:100%;accent-color:var(--primary);" oninput="updateBrightness(this)">
+      </div>
+      
+      <div class="smart-device" id="dev-led-strip" data-room="living">
+        <div class="smart-icon">🔆</div>
+        <div style="font-weight:600;font-size:0.9rem;">LED Lenta</div>
+        <div style="font-size:0.75rem;color:var(--text-3);">O'chiq</div>
+        <button class="smart-toggle" onclick="toggleDevice(this, 'dev-led-strip')"></button>
+        <div style="display:flex;gap:4px;">
+          <div style="width:20px;height:20px;background:#38BDF8;border-radius:50%;cursor:pointer;" onclick="setLedColor('#38BDF8')"></div>
+          <div style="width:20px;height:20px;background:#8B5CF6;border-radius:50%;cursor:pointer;" onclick="setLedColor('#8B5CF6')"></div>
+          <div style="width:20px;height:20px;background:#10B981;border-radius:50%;cursor:pointer;" onclick="setLedColor('#10B981')"></div>
+          <div style="width:20px;height:20px;background:#F59E0B;border-radius:50%;cursor:pointer;" onclick="setLedColor('#F59E0B')"></div>
+          <div style="width:20px;height:20px;background:#EF4444;border-radius:50%;cursor:pointer;" onclick="setLedColor('#EF4444')"></div>
+        </div>
+      </div>
+      
+      <!-- Climate -->
+      <div class="smart-device active" id="dev-ac" data-room="living">
+        <div class="smart-icon">❄️</div>
+        <div style="font-weight:600;font-size:0.9rem;">Konditsioner</div>
+        <div style="font-size:0.75rem;color:var(--accent-green);" id="ac-temp-display">22°C</div>
+        <button class="smart-toggle on" onclick="toggleDevice(this, 'dev-ac')"></button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="btn btn-glass btn-sm" onclick="changeTemp(-1)" style="width:28px;height:28px;padding:0;border-radius:50%;">−</button>
+          <span id="ac-temp" style="font-size:0.9rem;font-weight:700;">22</span>
+          <button class="btn btn-glass btn-sm" onclick="changeTemp(1)" style="width:28px;height:28px;padding:0;border-radius:50%;">+</button>
+        </div>
+      </div>
+      
+      <!-- Security -->
+      <div class="smart-device active" id="dev-camera" data-room="all">
+        <div class="smart-icon">📷</div>
+        <div style="font-weight:600;font-size:0.9rem;">Xavfsizlik Kamera</div>
+        <div style="font-size:0.75rem;color:var(--accent-green);">Aktiv • 1080p</div>
+        <button class="smart-toggle on" onclick="toggleDevice(this, 'dev-camera')"></button>
+        <div style="font-size:0.75rem;color:var(--text-2);">🔴 Jonli yozuv</div>
+      </div>
+      
+      <div class="smart-device" id="dev-lock" data-room="all">
+        <div class="smart-icon">🔐</div>
+        <div style="font-weight:600;font-size:0.9rem;">Aqlli Qulf</div>
+        <div style="font-size:0.75rem;color:var(--text-2);">Yopiq</div>
+        <button class="btn btn-primary btn-sm" onclick="controlLock()">🔓 Ochish</button>
+        <div style="font-size:0.75rem;color:var(--text-3);">Oxirgi: 09:30</div>
+      </div>
+      
+      <div class="smart-device" id="dev-bell" data-room="all">
+        <div class="smart-icon">🔔</div>
+        <div style="font-weight:600;font-size:0.9rem;">Domofon</div>
+        <div style="font-size:0.75rem;color:var(--text-2);">Tayyor</div>
+        <button class="smart-toggle" onclick="toggleDevice(this, 'dev-bell')"></button>
+        <div style="font-size:0.75rem;color:var(--text-3);">Wi-Fi ✓</div>
+      </div>
+      
+      <!-- Kitchen -->
+      <div class="smart-device" id="dev-oven" data-room="kitchen">
+        <div class="smart-icon">🍳</div>
+        <div style="font-weight:600;font-size:0.9rem;">Aqlli Plita</div>
+        <div style="font-size:0.75rem;color:var(--text-3);">O'chiq</div>
+        <button class="smart-toggle" onclick="toggleDevice(this, 'dev-oven')"></button>
+        <div style="font-size:0.75rem;color:var(--text-3);">Taymer: 00:00</div>
+      </div>
+      
+      <div class="smart-device" id="dev-fridge" data-room="kitchen">
+        <div class="smart-icon">🧊</div>
+        <div style="font-weight:600;font-size:0.9rem;">Muzlatgich</div>
+        <div style="font-size:0.75rem;color:var(--accent-green);">4°C / -18°C</div>
+        <button class="smart-toggle on" onclick="toggleDevice(this, 'dev-fridge')"></button>
+        <div style="font-size:0.75rem;color:var(--text-3);">Energiya: A+++</div>
+      </div>
+      
+      <!-- Voice -->
+      <div class="smart-device" id="dev-voice" data-room="all">
+        <div class="smart-icon" id="voice-icon">🎤</div>
+        <div style="font-weight:600;font-size:0.9rem;">Ovozli Boshqaruv</div>
+        <div style="font-size:0.75rem;color:var(--text-3);" id="voice-status">Bosing</div>
+        <button class="btn btn-glass btn-sm" id="voice-btn" onclick="startVoiceControl()">🎤 Gapirishni Boshlash</button>
+        <div style="font-size:0.75rem;color:var(--text-3);">"Chiroqni yoq" kabi buyruqlar</div>
+      </div>
+    </div>
+    
+    <!-- Energy Monitor -->
+    <div class="glass-card p-24 mt-24">
+      <h2 style="font-size:1.1rem;margin-bottom:20px;">⚡ Energiya Monitoring</h2>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+        <div class="stat-card">
+          <div class="stat-icon">⚡</div>
+          <div>
+            <div class="stat-value" style="color:#F59E0B;">2.4 kWh</div>
+            <div class="stat-label">Bugungi Sarif</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div>
+            <div class="stat-value" style="color:var(--accent);">67 kWh</div>
+            <div class="stat-label">Bu Oylik</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div>
+            <div class="stat-value" style="color:var(--accent-green);">45,800</div>
+            <div class="stat-label">Taxminiy (so'm)</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🌡️</div>
+          <div>
+            <div class="stat-value gradient-text">22°C</div>
+            <div class="stat-label">Uy Harorat</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Energy chart -->
+      <canvas id="energy-chart" style="margin-top:20px;" height="120"></canvas>
+    </div>
+    
+    <!-- AI Recommendations -->
+    <div class="glass-card p-24 mt-24">
+      <h2 style="font-size:1.1rem;margin-bottom:16px;">🤖 AI Smart Home Tavsiyalari</h2>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="alert alert-info">💡 Yashash xonadagi chiroq 8 soatdan ortiq yoniq. Harakatga sezgir sensor o'rnatilsa 30% tejash mumkin.</div>
+        <div class="alert alert-success">✅ Konditsioner A+++ energiya sinfida ishlayapti. Optimal sozlama.</div>
+        <div class="alert alert-warning">⚠️ Hammom chiroqi soniyalar oralig'ida 12 marta yonib o'chgan. Sensor tekshirish kerak.</div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let acTemp = 22;
+
+function toggleDevice(btn, devId) {
+  btn.classList.toggle('on');
+  const device = document.getElementById(devId);
+  device.classList.toggle('active');
+  const statusEl = device.querySelector('div:nth-child(3)');
+  if (btn.classList.contains('on')) {
+    statusEl.textContent = 'Yoniq';
+    statusEl.style.color = 'var(--accent-green)';
+    showToast(`${device.querySelector('div:nth-child(2)').textContent} yondi ✅`, 'success', 2000);
+  } else {
+    statusEl.textContent = "O'chiq";
+    statusEl.style.color = 'var(--text-3)';
+  }
+}
+
+function changeTemp(delta) {
+  acTemp = Math.max(16, Math.min(30, acTemp + delta));
+  document.getElementById('ac-temp').textContent = acTemp;
+  document.getElementById('ac-temp-display').textContent = acTemp + '°C';
+}
+
+function setLedColor(color) {
+  document.getElementById('dev-led-strip').querySelector('.smart-icon').style.filter = `drop-shadow(0 0 8px ${color})`;
+  showToast(`LED rang o'zgardi`, 'success', 1500);
+}
+
+function controlLock() {
+  const btn = event.target;
+  const isOpen = btn.textContent.includes('Ochish');
+  btn.textContent = isOpen ? '🔒 Yopish' : '🔓 Ochish';
+  btn.className = isOpen ? 'btn btn-danger btn-sm' : 'btn btn-primary btn-sm';
+  showToast(isOpen ? '🔓 Eshik ochildi!' : '🔒 Eshik yopildi!', 'info', 2000);
+}
+
+function selectRoom(room, btn) {
+  document.querySelectorAll('.smart-grid').forEach(() => {});
+  document.querySelectorAll('.page-header + div button').forEach(b => {
+    b.className = 'btn btn-glass btn-sm';
+  });
+  btn.className = 'btn btn-primary btn-sm';
+  
+  const devices = document.querySelectorAll('.smart-device');
+  devices.forEach(d => {
+    if (room === 'all' || d.dataset.room === room || d.dataset.room === 'all') {
+      d.style.display = 'flex';
+    } else {
+      d.style.display = 'none';
+    }
+  });
+}
+
+function startVoiceControl() {
+  if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+    showToast('Brauzeringiz ovozni qo\'llab-quvvatlamaydi', 'warning');
+    return;
+  }
+  
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new Recognition();
+  recognition.lang = 'uz-UZ';
+  
+  document.getElementById('voice-status').textContent = '🎤 Tinglayapman...';
+  document.getElementById('voice-icon').textContent = '🔴';
+  
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript.toLowerCase();
+    document.getElementById('voice-status').textContent = `"${transcript}"`;
+    processVoiceCommand(transcript);
+  };
+  
+  recognition.onerror = () => {
+    document.getElementById('voice-status').textContent = 'Xatolik';
+    document.getElementById('voice-icon').textContent = '🎤';
+  };
+  
+  recognition.onend = () => {
+    document.getElementById('voice-icon').textContent = '🎤';
+  };
+  
+  recognition.start();
+}
+
+function processVoiceCommand(text) {
+  if (text.includes('chiroq') && (text.includes('yoq') || text.includes('on'))) {
+    document.getElementById('dev-main-light').querySelector('.smart-toggle').click();
+    showToast('✅ Chiroq yoqildi', 'success');
+  } else if (text.includes('o\'chir') || text.includes('off')) {
+    showToast('📤 Buyruq bajarildi', 'success');
+  } else {
+    showToast(`Buyruq tushunilmadi: "${text}"`, 'warning');
+  }
+}
+
+// Energy Chart
+function drawEnergyChart() {
+  const canvas = document.getElementById('energy-chart');
+  if (!canvas) return;
+  canvas.width = canvas.parentElement.clientWidth - 48;
+  canvas.height = 120;
+  
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  
+  const hours = Array.from({length: 24}, (_, i) => i);
+  const usage = [0.1,0.08,0.08,0.1,0.15,0.4,1.2,2.1,1.8,1.4,1.2,1.5,2.0,1.8,1.5,1.3,1.6,2.2,2.8,2.4,2.0,1.6,0.8,0.3];
+  const maxVal = Math.max(...usage);
+  
+  ctx.clearRect(0, 0, W, H);
+  
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(37,99,235,0.4)');
+  grad.addColorStop(1, 'rgba(37,99,235,0)');
+  
+  const stepX = W / (hours.length - 1);
+  
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  hours.forEach((h, i) => {
+    const x = i * stepX;
+    const y = H - (usage[i] / maxVal) * (H - 20);
+    if (i === 0) ctx.lineTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.lineTo(W, H);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+  
+  // Line
+  ctx.beginPath();
+  ctx.strokeStyle = '#2563EB';
+  ctx.lineWidth = 2;
+  hours.forEach((h, i) => {
+    const x = i * stepX;
+    const y = H - (usage[i] / maxVal) * (H - 20);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  
+  // Hour labels
+  ctx.fillStyle = 'rgba(148,163,184,0.6)';
+  ctx.font = '9px Inter';
+  ctx.textAlign = 'center';
+  [0, 6, 12, 18, 23].forEach(h => {
+    ctx.fillText(`${h}:00`, h * stepX, H - 2);
+  });
+}
+
+drawEnergyChart();
+window.addEventListener('resize', drawEnergyChart);
+</script>
+{% endblock %}

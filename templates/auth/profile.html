@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="app-layout">
+  {% include 'components/sidebar.html' %}
+  <main class="main-content">
+    <div class="page-header"><h1>👤 Profilim</h1></div>
+    <div class="glass-card p-24" style="max-width:600px;">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group"><label class="form-label">Ism</label><input type="text" name="first_name" class="form-input" value="{{ request.user.first_name }}"></div>
+        <div class="form-group"><label class="form-label">Familiya</label><input type="text" name="last_name" class="form-input" value="{{ request.user.last_name }}"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" name="email" class="form-input" value="{{ request.user.email }}"></div>
+        <div class="form-group"><label class="form-label">Telefon</label><input type="tel" name="phone_number" class="form-input" value="{{ request.user.phone_number }}"></div>
+        <div class="form-group"><label class="form-label">Shahar</label><input type="text" name="city" class="form-input" value="{{ request.user.city }}"></div>
+        <div class="form-group"><label class="form-label">Bio</label><textarea name="bio" class="form-input" rows="3">{{ request.user.bio }}</textarea></div>
+        <div class="glass-card p-16 mb-16" style="background:rgba(37,99,235,0.08);">
+          <div style="display:flex;justify-content:space-between;"><span>Plan:</span><strong>{{ request.user.plan|upper }}</strong></div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;"><span>AI So'rovlar (jami):</span><strong>{{ request.user.ai_requests_total }}</strong></div>
+        </div>
+        <button type="submit" class="btn btn-primary">✅ Saqlash</button>
+      </form>
+    </div>
+  </main>
+</div>
+{% endblock %}

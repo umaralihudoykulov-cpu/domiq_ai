@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="app-layout">
+  {% include 'components/sidebar.html' %}
+  
+  <main class="main-content">
+    <div class="page-header">
+      <h1>➕ Yangi Loyiha</h1>
+      <p class="text-2">Remont loyihasini boshlang</p>
+    </div>
+    
+    <div class="glass-card p-24" style="max-width:700px;">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label class="form-label">📝 Loyiha nomi</label>
+          <input type="text" name="title" class="form-input" placeholder="Masalan: 3 xonali kvartira remonti" required>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-group">
+            <label class="form-label">🏠 Uy turi</label>
+            <select name="home_type" class="form-select" required>
+              <option value="apartment">Kvartira</option>
+              <option value="house">Uy</option>
+              <option value="studio">Studiya</option>
+              <option value="villa">Villa</option>
+              <option value="office">Ofis</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">🔨 Remont turi</label>
+            <select name="repair_type" class="form-select" required>
+              <option value="cosmetic">Kosmetik</option>
+              <option value="euro" selected>Evro remont</option>
+              <option value="design">Dizayn remont</option>
+              <option value="premium">Premium</option>
+              <option value="full">Kapital</option>
+            </select>
+          </div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div class="form-group">
+            <label class="form-label">📐 Maydon (m²)</label>
+            <input type="number" name="area" class="form-input" placeholder="50" step="0.5" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">🚪 Xonalar</label>
+            <input type="number" name="rooms" class="form-input" value="2" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">🚿 Hammomlar</label>
+            <input type="number" name="bathrooms" class="form-input" value="1" min="1">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📍 Manzil</label>
+          <input type="text" name="address" class="form-input" placeholder="Toshkent, Yunusobod tumani">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">💰 Byudjet (so'm)</label>
+          <input type="number" name="budget" class="form-input" placeholder="50,000,000">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">📝 Tavsif</label>
+          <textarea name="description" class="form-input" rows="3" placeholder="Loyiha haqida qisqacha..."></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.9rem;">
+            <input type="checkbox" name="has_smart_home" class="form-checkbox">
+            <span>🏡 Smart Home integratsiyasi kerak</span>
+          </label>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">🖼️ Uy plani (ixtiyoriy)</label>
+          <label for="floor-plan" class="form-file-label">
+            <span style="font-size:1.5rem;">📁</span>
+            <div>
+              <div style="font-weight:600;">Plan rasmini yuklang</div>
+              <div style="font-size:0.75rem;color:var(--text-3);">JPG, PNG, PDF</div>
+            </div>
+          </label>
+          <input type="file" id="floor-plan" name="floor_plan" class="form-file" accept="image/*,.pdf">
+        </div>
+        
+        <div style="display:flex;gap:12px;margin-top:24px;">
+          <button type="submit" class="btn btn-primary btn-lg">✅ Loyiha Yaratish</button>
+          <a href="{% url 'projects:list' %}" class="btn btn-glass btn-lg">← Orqaga</a>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>
+{% endblock %}

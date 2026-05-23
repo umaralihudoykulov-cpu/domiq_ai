@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<!-- Navbar -->
+<nav class="navbar glass-nav">
+  <div class="container" style="display:flex;align-items:center;width:100%;gap:24px;">
+    <a href="/" class="navbar-brand">
+      <div class="navbar-logo">🏠</div>
+      <span class="gradient-text">DomIQ Pro Max</span>
+    </a>
+    <div class="navbar-links">
+      <a href="/">Bosh sahifa</a>
+      <a href="/marketplace/">Ustalar</a>
+      <a href="/pricing/" class="active">Narxlar</a>
+    </div>
+    <div class="navbar-actions" style="margin-left:auto;">
+      {% if user.is_authenticated %}
+      <a href="/dashboard/" class="btn btn-primary btn-sm">Dashboard</a>
+      {% else %}
+      <a href="/auth/login/" class="btn btn-glass btn-sm">Kirish</a>
+      <a href="/auth/register/" class="btn btn-primary btn-sm">Boshlash</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<div style="padding-top:100px;padding-bottom:80px;">
+  <div class="container">
+    <div class="text-center mb-32">
+      <h1 style="font-size:2.5rem;margin-bottom:16px;">Narxlar va <span class="gradient-text">Rejalar</span></h1>
+      <p class="text-2" style="font-size:1rem;max-width:500px;margin:0 auto;">Birinchi qadamni bepul qo'ying. Kerakli vaqtda yangilang.</p>
+    </div>
+    
+    <div class="pricing-grid">
+      <!-- Free -->
+      <div class="pricing-card">
+        <div style="font-size:1.5rem;margin-bottom:8px;">🆓</div>
+        <h3>Free</h3>
+        <div class="pricing-price">0 <span>so'm/oy</span></div>
+        <ul class="pricing-features">
+          <li>3 ta AI render/kun</li>
+          <li>1 ta loyiha</li>
+          <li>Smeta kalkulyator</li>
+          <li>Material hisob</li>
+          <li>Marketplace ko'rish</li>
+        </ul>
+        <a href="/auth/register/" class="btn btn-glass w-full" style="justify-content:center;">Boshlash →</a>
+      </div>
+      
+      <!-- Pro -->
+      <div class="pricing-card popular">
+        <div class="popular-badge">🔥 Mashhur</div>
+        <div style="font-size:1.5rem;margin-bottom:8px;">⚡</div>
+        <h3>Pro</h3>
+        <div class="pricing-price">149,000 <span>so'm/oy</span></div>
+        <ul class="pricing-features">
+          <li>20 ta AI render/kun</li>
+          <li>10 ta loyiha</li>
+          <li>Elektr montaj AI</li>
+          <li>PDF Smeta export</li>
+          <li>AI Chat konsultant</li>
+          <li>Smart Home rejalashtirish</li>
+        </ul>
+        <a href="/auth/register/" class="btn btn-primary w-full" style="justify-content:center;">Pro boshlash →</a>
+      </div>
+      
+      <!-- Premium -->
+      <div class="pricing-card" style="background:linear-gradient(135deg,rgba(245,158,11,0.08),rgba(239,68,68,0.04));border-color:rgba(245,158,11,0.3);">
+        <div style="font-size:1.5rem;margin-bottom:8px;">💎</div>
+        <h3>Premium</h3>
+        <div class="pricing-price" style="background:linear-gradient(135deg,#F59E0B,#EF4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">349,000 <span style="-webkit-text-fill-color:var(--text-2);">so'm/oy</span></div>
+        <ul class="pricing-features">
+          <li>100 ta AI render/kun</li>
+          <li>Cheksiz loyihalar</li>
+          <li>HD sifatli renderlar</li>
+          <li>AI Vision tahlil</li>
+          <li>Priority generatsiya</li>
+          <li>Premium support 24/7</li>
+          <li>Advanced Smart Home</li>
+        </ul>
+        <a href="/auth/register/" class="btn btn-accent w-full" style="justify-content:center;">Premium boshlash →</a>
+      </div>
+      
+      <!-- Business -->
+      <div class="pricing-card" style="background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(236,72,153,0.04));border-color:rgba(139,92,246,0.3);">
+        <div style="font-size:1.5rem;margin-bottom:8px;">🏢</div>
+        <h3>Business</h3>
+        <div class="pricing-price" style="background:linear-gradient(135deg,#8B5CF6,#EC4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">999,000 <span style="-webkit-text-fill-color:var(--text-2);">so'm/oy</span></div>
+        <ul class="pricing-features">
+          <li>Cheksiz AI renderlar</li>
+          <li>Jamoaviy akkauntlar</li>
+          <li>White-label imkoniyat</li>
+          <li>API kirish</li>
+          <li>Maxsus integratsiyalar</li>
+          <li>Dedicated support</li>
+          <li>Custom AI training</li>
+          <li>Marketplace ustoz rejim</li>
+        </ul>
+        <a href="/contact/" class="btn btn-glass w-full" style="justify-content:center;border-color:rgba(139,92,246,0.5);color:#A78BFA;">Aloqa →</a>
+      </div>
+    </div>
+    
+    <div class="text-center mt-32">
+      <p class="text-2" style="font-size:0.9rem;">❓ Savollar bormi? <a href="/contact/" style="color:var(--accent);">Biz bilan bog'laning</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

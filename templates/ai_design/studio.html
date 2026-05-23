@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="app-layout">
+  {% include 'components/sidebar.html' %}
+  
+  <main class="main-content">
+    <div class="page-header">
+      <h1>🎨 AI Dizayn Studio</h1>
+      <p class="text-2">DALL-E 3 yordamida professional interior dizayn render yarating</p>
+    </div>
+    
+    <!-- AI Limit Bar -->
+    <div class="glass-card p-16 mb-24" style="display:flex;align-items:center;gap:16px;">
+      <div style="font-size:1.2rem;">🤖</div>
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:0.85rem;font-weight:600;">AI So'rovlar (Bugun)</span>
+          <span style="font-size:0.85rem;color:var(--text-2);">{{ ai_used }}/{{ ai_limit }}</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" style="width:{% if ai_limit > 0 %}{% widthratio ai_used ai_limit 100 %}{% else %}0{% endif %}%;"></div>
+        </div>
+      </div>
+      {% if not request.user.is_premium %}
+      <a href="{% url 'dashboard:pricing' %}" class="btn btn-accent btn-sm">⬆️ Premium</a>
+      {% endif %}
+    </div>
+    
+    <!-- AI Studio -->
+    <div class="ai-studio" id="ai-studio">
+      <!-- Controls Panel -->
+      <div class="ai-controls">
+        <h3 style="font-size:1rem;font-weight:700;margin-bottom:4px;">⚙️ Sozlamalar</h3>
+        
+        <!-- Room Type -->
+        <div>
+          <div class="form-label" style="margin-bottom:10px;">🏠 Xona turi</div>
+          <div class="room-selector" id="room-selector">
+            <div class="room-option selected" data-val="living_room" onclick="selectOption(this,'room')">
+              <span class="emoji">🛋️</span>Yashash
+            </div>
+            <div class="room-option" data-val="bedroom" onclick="selectOption(this,'room')">
+              <span class="emoji">🛏️</span>Yotoq
+            </div>
+            <div class="room-option" data-val="kitchen" onclick="selectOption(this,'room')">
+              <span class="emoji">🍳</span>Oshxona
+            </div>
+            <div class="room-option" data-val="bathroom" onclick="selectOption(this,'room')">
+              <span class="emoji">🚿</span>Hammom
+            </div>
+            <div class="room-option" data-val="office" onclick="selectOption(this,'room')">
+              <span class="emoji">💼</span>Ofis
+            </div>
+            <div class="room-option" data-val="dining" onclick="selectOption(this,'room')">
+              <span class="emoji">🍽️</span>Ovqat
+            </div>
+          </div>
+        </div>
+        
+        <!-- Style -->
+        <div>
+          <div class="form-label" style="margin-bottom:10px;">🎨 Dizayn stili</div>
+          <div class="style-selector" id="style-selector">
+            <div class="style-option selected" data-val="modern" onclick="selectOption(this,'style')">
+              <span class="emoji">🏙️</span>Modern
+            </div>
+            <div class="style-option" data-val="minimal" onclick="selectOption(this,'style')">
+              <span class="emoji">⬜</span>Minimal
+            </div>
+            <div class="style-option" data-val="scandinavian" onclick="selectOption(this,'style')">
+              <span class="emoji">🌿</span>Scandinav
+            </div>
+            <div class="style-option" data-val="loft" onclick="selectOption(this,'style')">
+              <span class="emoji">🧱</span>Loft
+            </div>
+            <div class="style-option" data-val="luxury" onclick="selectOption(this,'style')">
+              <span class="emoji">💎</span>Luxury
+            </div>
+            <div class="style-option" data-val="japandi" onclick="selectOption(this,'style')">
+              <span class="emoji">🎋</span>Japandi
+            </div>
+            <div class="style-option" data-val="classic" onclick="selectOption(this,'style')">
+              <span class="emoji">🏛️</span>Classic
+            </div>
+            <div class="style-option" data-val="neo_classic" onclick="selectOption(this,'style')">
+              <span class="emoji">✨</span>Neo-Class
+            </div>
+          </div>
+        </div>
+        
+        <!-- Area -->
+        <div class="form-group">
+          <label class="form-label">📐 Maydon: <span id="area-display">30</span> m²</label>
+          <input type="range" min="10" max="200" value="30" id="area-input"
+            oninput="document.getElementById('area-display').textContent=this.value"
+            style="width:100%;accent-color:var(--primary);">
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-3);">
+            <span>10 m²</span><span>200 m²</span>
+          </div>
+        </div>
+        
+        <!-- Color Scheme -->
+        <div class="form-group">
+          <label class="form-label">🎨 Rang sxemasi</label>
+          <select class="form-select" id="color-input">
+            <option value="neutral warm tones">Issiq neytral</option>
+            <option value="cool blue and white">Sovuq ko'k-oq</option>
+            <option value="earth tones brown and beige">Tuproq ranglari</option>
+            <option value="monochromatic grey">Monoxromatik kulrang</option>
+            <option value="black and gold luxury">Qora-oltin</option>
+            <option value="sage green and white">Yashil-oq</option>
+            <option value="navy and copper">Ko'k-mis</option>
+          </select>
+        </div>
+        
+        <!-- Budget Level -->
+        <div class="form-group">
+          <label class="form-label">💰 Byudjet darajasi</label>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;" id="budget-selector">
+            <div class="style-option" data-val="low" onclick="selectOption(this,'budget')">
+              <span class="emoji">💵</span>Arzon
+            </div>
+            <div class="style-option selected" data-val="medium" onclick="selectOption(this,'budget')">
+              <span class="emoji">💶</span>O'rta
+            </div>
+            <div class="style-option" data-val="high" onclick="selectOption(this,'budget')">
+              <span class="emoji">💷</span>Qimmat
+            </div>
+            <div class="style-option" data-val="luxury" onclick="selectOption(this,'budget')">
+              <span class="emoji">💎</span>Luxury
+            </div>
+          </div>
+        </div>
+        
+        <!-- Custom Prompt -->
+        <div class="form-group">
+          <label class="form-label">✏️ Qo'shimcha tavsif (ixtiyoriy)</label>
+          <textarea class="form-input" id="custom-prompt" rows="3" 
+            placeholder="Masalan: devor yonida kitob tokchasi, oq marmar pol, oltin aksessuarlar..."></textarea>
+        </div>
+        
+        <!-- Generate Button -->
+        <button class="btn btn-accent w-full btn-lg" id="generate-btn" onclick="generateDesign()">
+          🎨 AI Render Yaratish
+        </button>
+        
+        <p class="text-2 text-center" style="font-size:0.75rem;">
+          ⚡ 30-60 soniyada tayyor • HD sifat
+        </p>
+      </div>
+      
+      <!-- Preview Panel -->
+      <div class="ai-preview">
+        <!-- Empty state -->
+        <div class="ai-preview-empty" id="preview-empty">
+          <div class="icon">🎨</div>
+          <h3 style="font-size:1rem;">AI Render Yaratishga Tayyor</h3>
+          <p>Sozlamalarni tanlang va "AI Render Yaratish" tugmasini bosing</p>
+        </div>
+        
+        <!-- Loading state -->
+        <div class="ai-loading hidden" id="preview-loading">
+          <div class="ai-loading-orb" style="width:80px;height:80px;"></div>
+          <h3 style="font-size:1rem;">AI ishlamoqda...</h3>
+          <p class="ai-loading-text">DALL-E 3 render yaratmoqda</p>
+          <div style="margin-top:8px;">
+            <div style="display:flex;gap:6px;justify-content:center;" id="loading-steps">
+              <span style="font-size:0.8rem;color:var(--text-2);" id="step-1">📝 Prompt tayyorlanmoqda</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Result -->
+        <div class="hidden" id="preview-result" style="flex:1;display:flex;flex-direction:column;">
+          <div style="position:relative;flex:1;overflow:hidden;">
+            <img id="result-image" src="" alt="AI Design" style="width:100%;height:100%;object-fit:cover;">
+            <div style="position:absolute;top:12px;right:12px;display:flex;gap:8px;">
+              <button class="btn btn-glass btn-sm" onclick="downloadImage()">⬇️ Saqlash</button>
+              <button class="btn btn-primary btn-sm" onclick="generateDesign()">🔄 Qayta</button>
+            </div>
+            <div style="position:absolute;bottom:0;left:0;right:0;padding:20px;background:linear-gradient(to top, rgba(2,6,23,0.95) 0%, transparent 100%);">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;" id="color-palette"></div>
+            </div>
+          </div>
+          
+          <div style="padding:20px;background:var(--bg-2);border-top:1px solid var(--card-border);">
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+              <div style="font-size:1.5rem;">🤖</div>
+              <div>
+                <div style="font-weight:600;margin-bottom:6px;font-size:0.9rem;">AI Dizayner Tavsiyasi</div>
+                <div style="font-size:0.85rem;color:var(--text-2);line-height:1.6;" id="ai-response"></div>
+              </div>
+            </div>
+            
+            <div id="furniture-suggestions" style="margin-top:16px;display:none;">
+              <div style="font-size:0.8rem;font-weight:600;color:var(--text-2);margin-bottom:8px;">🛋️ Mebel Tavsiyalari</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;" id="furniture-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Recent Designs Gallery -->
+    {% if user_designs %}
+    <div class="glass-card p-24 mt-24">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h2 style="font-size:1.1rem;">📸 Mening Renderlarim</h2>
+        <a href="{% url 'ai_design:gallery' %}" class="btn btn-glass btn-sm">Hammasi →</a>
+      </div>
+      <div class="designs-gallery">
+        {% for design in user_designs %}
+        <div class="design-card" onclick="previewDesign('{{ design.image_url }}', '{{ design.style }}')">
+          <div class="design-card-image">
+            {% if design.image_url %}
+              <img src="{{ design.image_url }}" alt="{{ design.style }}">
+            {% else %}
+              <div style="width:100%;height:100%;background:var(--bg-2);display:flex;align-items:center;justify-content:center;font-size:2rem;">🎨</div>
+            {% endif %}
+            <div class="design-card-overlay">
+              <span class="project-card-badge badge-completed">{{ design.get_style_display|default:design.style }}</span>
+            </div>
+          </div>
+          <div class="design-card-body">
+            <div style="font-size:0.8rem;font-weight:600;">{{ design.style|title }} • {{ design.room_type|title }}</div>
+            <div style="font-size:0.75rem;color:var(--text-2);">{{ design.area }} m² • {{ design.created_at|date:"d M Y" }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </main>
+</div>
+
+<!-- Image Preview Modal -->
+<div id="preview-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;align-items:center;justify-content:center;" onclick="this.classList.add('hidden')">
+  <img id="modal-image" src="" style="max-width:90vw;max-height:90vh;border-radius:16px;object-fit:contain;">
+  <button style="position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.1);border:none;color:white;font-size:1.5rem;cursor:pointer;border-radius:50%;width:40px;height:40px;">✕</button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentDesign = { room: 'living_room', style: 'modern', budget: 'medium' };
+
+function selectOption(el, type) {
+  const map = { room: 'room-selector', style: 'style-selector', budget: 'budget-selector' };
+  const container = document.getElementById(map[type]) || el.parentElement;
+  container.querySelectorAll('.room-option, .style-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  currentDesign[type] = el.dataset.val;
+}
+
+async function generateDesign() {
+  const btn = document.getElementById('generate-btn');
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ Generatsiya...';
+  
+  document.getElementById('preview-empty').classList.add('hidden');
+  document.getElementById('preview-loading').classList.remove('hidden');
+  document.getElementById('preview-result').classList.add('hidden');
+  
+  // Animate loading steps
+  const steps = ['📝 Prompt tayyorlanmoqda...', '🔄 OpenAI API bilan bog\'lanish...', '🎨 Render yaratilmoqda...', '✨ Sifat tekshirilmoqda...'];
+  let stepIdx = 0;
+  const stepEl = document.getElementById('step-1');
+  const stepInterval = setInterval(() => {
+    if (stepIdx < steps.length) {
+      stepEl.textContent = steps[stepIdx++];
+    }
+  }, 4000);
+  
+  try {
+    const resp = await fetch('/api/v1/ai/generate-design/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify({
+        room_type: currentDesign.room,
+        style: currentDesign.style,
+        area: document.getElementById('area-input').value,
+        color_scheme: document.getElementById('color-input').value,
+        budget_level: currentDesign.budget,
+        custom_prompt: document.getElementById('custom-prompt').value,
+      })
+    });
+    
+    clearInterval(stepInterval);
+    const data = await resp.json();
+    
+    document.getElementById('preview-loading').classList.add('hidden');
+    
+    if (data.success) {
+      document.getElementById('preview-result').classList.remove('hidden');
+      document.getElementById('preview-result').style.display = 'flex';
+      document.getElementById('result-image').src = data.image_url;
+      document.getElementById('ai-response').textContent = data.ai_response || 'Professional dizayn render yaratildi!';
+      
+      // Color palette
+      const palette = document.getElementById('color-palette');
+      palette.innerHTML = '';
+      (data.color_palette || ['#F5F0EB', '#2D2926', '#8B7355', '#E8DDD0', '#4A90D9']).forEach(color => {
+        palette.innerHTML += `<div style="width:24px;height:24px;background:${color};border-radius:50%;border:2px solid rgba(255,255,255,0.3);cursor:pointer;" title="${color}"></div>`;
+      });
+      
+      // Furniture suggestions
+      if (data.furniture_suggestions?.length > 0) {
+        const furnitureDiv = document.getElementById('furniture-suggestions');
+        const furnitureList = document.getElementById('furniture-list');
+        furnitureDiv.style.display = 'block';
+        furnitureList.innerHTML = data.furniture_suggestions.map(f => 
+          `<span class="sidebar-badge" style="padding:4px 10px;font-size:0.75rem;">${f}</span>`
+        ).join('');
+      }
+      
+      if (data.demo_mode) {
+        showToast('Demo render yaratildi! OpenAI API kaliti bilan HD render oling 🎨', 'info', 5000);
+      } else {
+        showToast('AI Render tayyor! ✨', 'success');
+      }
+    } else {
+      document.getElementById('preview-empty').classList.remove('hidden');
+      showToast(data.error || 'Xatolik yuz berdi', 'error');
+    }
+    
+  } catch(e) {
+    clearInterval(stepInterval);
+    document.getElementById('preview-loading').classList.add('hidden');
+    document.getElementById('preview-empty').classList.remove('hidden');
+    showToast('Ulanish xatosi. Serverga bog\'laning.', 'error');
+  }
+  
+  btn.disabled = false;
+  btn.textContent = '🎨 AI Render Yaratish';
+}
+
+function downloadImage() {
+  const img = document.getElementById('result-image');
+  const link = document.createElement('a');
+  link.href = img.src;
+  link.download = 'domiq-ai-design.jpg';
+  link.click();
+}
+
+function previewDesign(url, style) {
+  if (!url) return;
+  document.getElementById('modal-image').src = url;
+  document.getElementById('preview-modal').classList.remove('hidden');
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('preview-modal').classList.add('hidden');
+  if (e.key === 'Enter' && e.ctrlKey) generateDesign();
+});
+
+// AI Studio responsive
+function updateLayout() {
+  const studio = document.getElementById('ai-studio');
+  if (window.innerWidth < 1024) {
+    studio.style.gridTemplateColumns = '1fr';
+    studio.style.height = 'auto';
+  } else {
+    studio.style.gridTemplateColumns = '400px 1fr';
+    studio.style.height = 'calc(100vh - 200px)';
+  }
+}
+updateLayout();
+window.addEventListener('resize', updateLayout);
+</script>
+{% endblock %}
